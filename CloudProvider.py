@@ -3,18 +3,19 @@ import numpy
 import math
 
 class CloudProvider(object):
-    def __init__(self, ID, brokerSize):
+    def __init__(self, ID, userSize):
         self._ID = ID
-        self._brokerSize = brokerSize
+        # self._brokerSize = brokerSize
         self._lowPrice = 0
         self._type2Price = 0
         self._highPrice = 0
         self._availableInstanceNum = 0
-        self._D_bc = [1] * brokerSize
-        self._D_cb = [1] * brokerSize
-        self._D_bc_history = [[1 for col in range(brokerSize)]]
-        self._B_in_history = [[1 for col in range(brokerSize)]]
-        self._brokersCredit = [1] * brokerSize
+        self._D_uc = [1] * userSize
+        # self._D_cb = [1] * brokerSize
+        # self._D_bc_history = [[1 for col in range(brokerSize)]]
+        # self._B_in_history = [[1 for col in range(brokerSize)]]
+        # self._brokersCredit = [1] * brokerSize
+        self._curUsersDemand = 0
 
     @property
     def ID(self):
@@ -31,11 +32,18 @@ class CloudProvider(object):
         self._type2Price = newPrice
 
     @property
-    def D_bc(self):
-        return self._D_bc
-    @D_bc.setter
-    def D_bc(self, newD_bc):
-        self._D_bc = newD_bc
+    def curUserDemand(self):
+        return self._curUsersDemand
+    @curUserDemand.setter
+    def curUserDemand(self, newDemand):
+        self._curUsersDemand = newDemand
+
+    @property
+    def D_uc(self):
+        return self._D_uc
+    @D_uc.setter
+    def D_uc(self, newD_uc):
+        self._D_bc = newD_uc
 
     @property
     def D_cb(self):
@@ -53,7 +61,7 @@ class CloudProvider(object):
         self._availableInstanceNum = newAvailableInstanceNum
 
     def genSupply(self):
-        supply = numpy.random.default_rng().poisson(250)
+        supply = numpy.random.default_rng().poisson(160)
         # print("lambda(cloud genSupply): ", supply)
         return supply
 
@@ -64,6 +72,12 @@ class CloudProvider(object):
         elif self._availableInstanceNum > 180:
             price = round(self._type2Price * random.uniform(0.4, 1.0), 2)
         return price
+
+    def aggregateDemand(self, users):
+        # np.random.seed(0)
+        for user in users:
+            self._D_uc[user.ID] = user.demand[self._ID] 
+        # self._curUsersDemand = totalUsersDemand
 
     def calBrokersCredit(self):
         sum_B_in = [sum(row) for row in zip(*self._B_in_history)]
@@ -94,3 +108,11 @@ class CloudProvider(object):
             self._D_bc_history.pop()
         if len(self._B_in_history) > x:
             self._B_in_history.pop()
+
+    def calJainsFairness(self, wholeInstance, users, cloudSize):
+        x_i = []
+        for user in users:
+            x_i.append(user.D_success[self._ID] / wholeInstance)
+        fairness = (sum(x_i) ** 2) / (cloudSize * sum(x_i))
+
+        return fairness

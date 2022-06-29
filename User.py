@@ -5,16 +5,16 @@ import numpy as np
 import math
 
 class User(object):
-    def __init__(self, ID, brokerSize):
+    def __init__(self, ID, cloudSize):
         self._ID = ID
-        self._brokerSize = brokerSize
+        self._cloudSize = cloudSize
         self._demand = []
         self._priceSensitivity = randrange(1, 4)
         self._demandSatisfaction = 1
         self._priceSatisfaction = 1
-        self._D = [1] * brokerSize
-        self._D_success = [1] * brokerSize
-        self._retailPrice = [40] * brokerSize
+        self._D = [1] * cloudSize
+        self._D_success = [1] * cloudSize
+        self._retailPrice = [40] * cloudSize
 
     @property
     def ID(self):
@@ -65,11 +65,11 @@ class User(object):
     def priceSensitivity(self):
         return self._priceSensitivity
     
-    def genDemand(self, brokerSize, curRound, arrivalRate):
+    def genDemand(self, cloudSize, curRound, arrivalRate):
         if curRound % 40 < 20:
-            self._demand = np.random.default_rng().poisson(arrivalRate, brokerSize)
+            self._demand = np.random.default_rng().poisson(arrivalRate, cloudSize)
         else:
-            self._demand = np.random.default_rng().poisson(arrivalRate * 2, brokerSize)
+            self._demand = np.random.default_rng().poisson(arrivalRate * 2, cloudSize)
         print('user demand:', self._demand)
 
     def update_D(self, brokerId):

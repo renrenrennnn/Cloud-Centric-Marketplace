@@ -1,4 +1,5 @@
 from matplotlib import markers
+from matplotlib.style import available
 from Broker import Broker
 from CloudProvider import CloudProvider
 from HistoryData import HistoryData
@@ -21,7 +22,7 @@ def main():
     originalBusniessStrategyIndex = 1
     clouds, brokers, users = [], [], []
     for idx in range(m):
-        clouds.append( CloudProvider(idx, n) )
+        clouds.append( CloudProvider(idx, k) )
     for idx in range(n):
         brokers.append( Broker(idx, m, n, k, originalBusniessStrategyIndex) )
     for idx in range(k):
@@ -36,7 +37,7 @@ def main():
     y, y2, y3 = [], [], []
     z, z2, z3 = [], [], []
     userDemand = []
-    fairnessPlot = [[] for i in range(n)]
+    fairnessPlot = [[] for i in range(m)]
     
     for curRound in range(totalRound):
         print("------------------- round: ", curRound, "------------------")
@@ -48,11 +49,11 @@ def main():
         userDemand.append(users[0].demand)
 
         # Broker aggregate all users' demand(step 1 -> done)
-        # logging.info(f'Broker aggregate all users demand')
-        # for broker in brokers:
-        #     broker.aggregateDemand(users)
-        #     print("broker", broker.ID, "aggregate user demand sum:", broker.curUsersDemand)
-        #     # y.append(broker.curUsersDemand)
+        logging.info(f'Cloud receive all users demand')
+        for cloud in clouds:
+            cloud.aggregateDemand(users)
+            print("cloud", cloud.ID, "aggregate user demand sum:", cloud.D_uc)
+            # y.append(broker.curUsersDemand)
 
         # # Broker decide D_bc (step 2 -> done)
         # for broker in brokers:
@@ -60,15 +61,31 @@ def main():
         #         cloud.D_bc[broker.ID] = broker.cal_D_bc(cloud.ID)
                 # cloud.D_bc_history[broker.ID].append(cloud.D_bc[broker.ID])
 
-        # Cloud reply instance supply and price (step 3 -> done)
+        ''' Cloud reply instance supply and price (step 3 -> done) '''
         # logging.info(f'Cloud reply instance supply and price')
         for cloud in clouds:
             cloud.type2Price = round(random.uniform(0.4, 0.6), 2)
             cloud.availableInstanceNum = cloud.genSupply()
-            print('cloud',cloud.ID, 'available instance number:', cloud.availableInstanceNum)
+            print('cloud',cloud.ID, 'available instance number:', cloud.D_uc)
         
-        for user in users:
+        ''' clouds distribute instance to user '''
+        for cloud in clouds:
+            while cloud.availableInstanceNum:
+                maxUserDemand = max(cloud.D_uc)
+                maxUserDemandIdx = cloud.D_uc.index(maxUserDemand)
+                if cloud.availableInstanceNum >= maxUserDemand:
+                    users[maxUserDemandIdx].D_success[cloud.ID] = maxUserDemand
+                else:
+                    users[maxUserDemandIdx].D_success[cloud.ID] = cloud.availableInstanceNum
+                    break
+                cloud.availableInstanceNum = cloud.availableInstanceNum - maxUserDemand
 
+        ''' calculate fairness'''
+        for cloud in clouds:
+            fairness = cloud.calJainsFairness(cloud.availableInstanceNum, users, m)
+            # print("fairness: ", fairness)
+            fairnessPlot[cloud.ID].append(fairness)
+            # fairnessPlot[cloud.ID] = cloud.calJainsFairness(user, m)
         # for broker in brokers:
         #     broker.getCloudSupply(clouds)
         #     broker.getCloudPrice(clouds)
@@ -157,28 +174,28 @@ def main():
         #         logging.info(f'broker {broker.ID} fairness: {fairness}')
 
         # update brokers' credit scored by cloud
-        for cloud in clouds:
-            cloud.updateBrokersCreditData(brokers)
-            cloud.calBrokersCredit()
-            print(cloud.brokersCredit)
+        # for cloud in clouds:
+        #     cloud.updateBrokersCreditData(brokers)
+        #     cloud.calBrokersCredit()
+        #     print(cloud.brokersCredit)
         
         # print(fairnessPlot[1])
 
-        y.append(clouds[0].brokersCredit[0])
-        z.append(clouds[0].brokersCredit[1])
+        # y.append(clouds[0].brokersCredit[0])
+        # z.append(clouds[0].brokersCredit[1])
         # y2.append(demandSatisfaction)
         # y3.append(priceSatisfaction)
     
     ''' plotting '''
-    plt.figure()
-    plt.xlim([100, 400])
-    # plt.subplot(3, 1, 1)
-    plt.plot(y)
-    plt.plot(z)
-    plt.title("brokers' credit over time")
-    plt.xlabel("Time (hour)")
-    plt.ylabel("brokers' credit")
-    plt.legend(['aggressive', 'not aggressive'])
+    # plt.figure()
+    # plt.xlim([100, 400])
+    # # plt.subplot(3, 1, 1)
+    # plt.plot(y)
+    # plt.plot(z)
+    # plt.title("brokers' credit over time")
+    # plt.xlabel("Time (hour)")
+    # plt.ylabel("brokers' credit")
+    # plt.legend(['aggressive', 'not aggressive'])
 
     # plt.subplot(3, 1, 2)
     # plt.plot(y2)
@@ -188,12 +205,12 @@ def main():
     # plt.plot(y3)
     #plt.title("user price satisfaction")
 
-    plt.figure()
-    plt.ylim([0,200])
-    plt.plot(userDemand)
-    plt.title("user demand")
+    # plt.figure()
+    # plt.ylim([0,200])
+    # plt.plot(userDemand)
+    # plt.title("user demand")
 
-    plt.figure()
+    # plt.figure()
     # x = linspace(0, totalRound, n)
     plt.xlim([100, 400])
     plt.ylim([0,1])
@@ -208,10 +225,13 @@ def main():
     # print(fairnessPlot[0])
     # plt.plot(fairnessPlot[1])
     plt.title("Jain's fairness")
-    plt.legend(['aggressive', 'not aggressive'])
-
-    plt.show()
+    # plt.legend(['aggressive', 'not aggressive'])
     
+    plt.show()
+    print(mean(listPlot))
+    # fairnessPrint = sum(listPlot) / len(listPlot)
+    # logging.info(f'cloud 0 market fairness{fairnessPrint}')
+     
     logging.info('simulation done...')
 
 if __name__ == '__main__':
