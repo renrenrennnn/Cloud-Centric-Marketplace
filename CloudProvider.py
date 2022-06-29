@@ -1,11 +1,12 @@
 import random
 import numpy
 import math
+import simpy
 
 class CloudProvider(object):
     def __init__(self, ID, userSize):
         self._ID = ID
-        # self._brokerSize = brokerSize
+        self._userSize = userSize
         self._lowPrice = 0
         self._type2Price = 0
         self._highPrice = 0

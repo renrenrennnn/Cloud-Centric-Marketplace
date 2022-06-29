@@ -8,7 +8,7 @@ class User(object):
     def __init__(self, ID, cloudSize):
         self._ID = ID
         self._cloudSize = cloudSize
-        self._demand = []
+        self._demand = [0 * cloudSize]
         self._priceSensitivity = randrange(1, 4)
         self._demandSatisfaction = 1
         self._priceSatisfaction = 1
@@ -67,9 +67,9 @@ class User(object):
     
     def genDemand(self, cloudSize, curRound, arrivalRate):
         if curRound % 40 < 20:
-            self._demand = np.random.default_rng().poisson(arrivalRate, cloudSize)
+            self._demand += np.random.default_rng().poisson(arrivalRate, cloudSize)
         else:
-            self._demand = np.random.default_rng().poisson(arrivalRate * 2, cloudSize)
+            self._demand += np.random.default_rng().poisson(arrivalRate * 2, cloudSize)
         print('user demand:', self._demand)
 
     def update_D(self, brokerId):
@@ -87,3 +87,11 @@ class User(object):
         mean_D = (self._D[brokerId] + self._demand[brokerId]) / t
         meanRetailPrice = self._retailPrice[brokerId] / (t - 1)
         return (autualPurchase / mean_D) * (optimalPrice / meanRetailPrice)
+
+    def calJainsFairness(self, wholeInstance, users, brokerSize, brokerId):
+        x_i = []
+        for user in users:
+            x_i.append(user.D_success[brokerId] / wholeInstance)
+        fairness = (sum(x_i) ** 2) / (brokerSize * sum(x_i))
+
+        return fairness
