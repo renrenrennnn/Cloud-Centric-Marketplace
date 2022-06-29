@@ -94,7 +94,7 @@ def main():
     fairness.append( (sum(x_i) ** 2) / (NUM_CLOUDS * sum(x_i)) )
     
     print("fairness: ", fairness)
-
+    logging.info(f'fairness = {fairness}')
 
 
 
