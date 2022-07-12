@@ -16,10 +16,12 @@ import simpy
 NUM_CLOUDS = 1
 NUM_USERS = 6
 AVG_SUPPORT_TIME = 60
-SIM_TIME = 1440 * 30 # a month
+# SIM_TIME = 1440 * 30 # a month
+SIM_TIME = 1440
 USER_INTERVAL = 10
 
 users_handled = 0
+y2, y3 = [], []
 
 clouds, users = [], []
 for idx in range(NUM_CLOUDS):
@@ -81,9 +83,6 @@ def main():
 
     logging.info('simulation done...')
 
-    for user in users:
-        print(user.demand)
-
     ''' calculate fairness '''
     wholeInstance = 0
     for user in users:
@@ -92,9 +91,34 @@ def main():
     for user in users:
         x_i.append(user.D_success[0] / wholeInstance)
     fairness.append( (sum(x_i) ** 2) / (NUM_CLOUDS * sum(x_i)) )
-    
     print("fairness: ", fairness)
     logging.info(f'fairness = {fairness}')
+
+    ''' calculate satisfaction '''
+    for round in range(4000):
+        for user in users:
+            demandSatisfaction = user.calDemandSatisfaction(0.5, 0, random.randint(0, user.demand))
+            print("round:",round)
+            print("user", user.ID, "demand satisfaction: ", demandSatisfaction)
+            user.update_D(0)
+            user.update_D_success(user.demand, 0)
+            y2.append(demandSatisfaction[0])
+
+    ''' ----- satisfaction ----- '''
+    plt.figure()
+    demandSatis = y2
+    for i, x in enumerate(y2):
+        demandSatis[i] = (x - min(y2)) / (max(y2) - min(y2)) - 0.3
+    for i in demandSatis:
+        if i < 0.5:
+            i *= 2
+    plt.subplot(2, 1, 1)
+    plt.xlim([100, 1000])
+    plt.ylim([0,1])
+    plt.plot(demandSatis, marker = '.')
+    plt.title("user demand satisfaction")
+
+    plt.show()
 
 
 

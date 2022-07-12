@@ -87,11 +87,3 @@ class User(object):
         mean_D = (self._D[brokerId] + self._demand[brokerId]) / t
         meanRetailPrice = self._retailPrice[brokerId] / (t - 1)
         return (autualPurchase / mean_D) * (optimalPrice / meanRetailPrice)
-
-    def calJainsFairness(self, wholeInstance, users, brokerSize, brokerId):
-        x_i = []
-        for user in users:
-            x_i.append(user.D_success[brokerId] / wholeInstance)
-        fairness = (sum(x_i) ** 2) / (brokerSize * sum(x_i))
-
-        return fairness
