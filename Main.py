@@ -95,28 +95,50 @@ def main():
     logging.info(f'fairness = {fairness}')
 
     ''' calculate satisfaction '''
-    for round in range(4000):
+    for round in range(400):
         for user in users:
+            # demand satisfaction
             demandSatisfaction = user.calDemandSatisfaction(0.5, 0, random.randint(0, user.demand))
             print("round:",round)
             print("user", user.ID, "demand satisfaction: ", demandSatisfaction)
             user.update_D(0)
             user.update_D_success(user.demand, 0)
             y2.append(demandSatisfaction[0])
+            
+            # price satisfaction
+            priceSatisfaction = user.calPriceSatisfaction(user.retailPrice, random.uniform(0.4, 0.6))
+            print("user", user.ID, "price satisfaction: ", priceSatisfaction)
+            y3.append(priceSatisfaction)
+            user.retailPrice = random.uniform(0.4, 0.6)
 
     ''' ----- satisfaction ----- '''
     plt.figure()
     demandSatis = y2
     for i, x in enumerate(y2):
         demandSatis[i] = (x - min(y2)) / (max(y2) - min(y2)) - 0.3
-    for i in demandSatis:
-        if i < 0.5:
-            i *= 2
-    plt.subplot(2, 1, 1)
-    plt.xlim([100, 1000])
+    plt.subplot(3, 1, 1)
+    plt.xlim([100, 400])
     plt.ylim([0,1])
     plt.plot(demandSatis, marker = '.')
     plt.title("user demand satisfaction")
+    
+    # priceSatis = y3
+    # for i, x in enumerate(y3):
+    #     priceSatis[i] = (x - min(y3)) / (max(y3) - min(y3))
+    plt.subplot(3, 1, 2)
+    plt.xlim([100, 400])
+    # plt.ylim([0,1])
+    plt.plot(y3, marker = '.')
+    plt.title("user price satisfaction")
+
+    satis = []
+    for i in range(len(y3)):
+        satis.append(demandSatis[i] * y3[i])
+    plt.subplot(3, 1, 3)
+    plt.xlim([100, 400])
+    # plt.ylim([0,1])
+    plt.plot(satis, marker = '.')
+    plt.title("user satisfaction")
 
     plt.show()
 

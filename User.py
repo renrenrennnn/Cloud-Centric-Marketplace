@@ -14,7 +14,7 @@ class User(object):
         self._priceSatisfaction = 1
         self._D = [1] * cloudSize
         self._D_success = [1] * cloudSize
-        self._retailPrice = [40] * cloudSize
+        self._retailPrice = 10
 
     @property
     def ID(self):
@@ -83,7 +83,12 @@ class User(object):
         curRes = actualPurchase / self._demand[brokerId]
         return historyRes * weight + curRes * (1 - weight)
 
-    def calPriceSatisfaction(self, brokerId, autualPurchase, optimalPrice, t):
-        mean_D = (self._D[brokerId] + self._demand[brokerId]) / t
-        meanRetailPrice = self._retailPrice[brokerId] / (t - 1)
-        return (autualPurchase / mean_D) * (optimalPrice / meanRetailPrice)
+    # def calPriceSatisfaction(self, brokerId, autualPurchase, optimalPrice, t):
+    #     mean_D = (self._D[brokerId] + self._demand[brokerId]) / t
+    #     meanRetailPrice = self._retailPrice[brokerId] / (t - 1)
+    #     return (autualPurchase / mean_D) * (optimalPrice / meanRetailPrice)
+
+    
+    def calPriceSatisfaction(self, predefinedPrice, optimalPrice):
+        S_PoS = math.exp((predefinedPrice - optimalPrice) / predefinedPrice)
+        return S_PoS
